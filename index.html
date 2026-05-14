@@ -159,6 +159,158 @@
       text-align: center;
     }
 
+    .methodology {
+      width: 100%;
+      max-width: 760px;
+      margin-top: 3rem;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      overflow: hidden;
+    }
+
+    .methodology summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      transition: background 0.2s ease;
+    }
+
+    .methodology summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .methodology summary:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .methodology summary .chevron {
+      color: var(--accent);
+      font-size: 1.2rem;
+      transition: transform 0.25s ease;
+      display: inline-block;
+    }
+
+    .methodology[open] summary .chevron {
+      transform: rotate(90deg);
+    }
+
+    .methodology .content {
+      padding: 0 1.5rem 1.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+
+    .methodology .content p {
+      margin-bottom: 1rem;
+    }
+
+    .methodology .content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .methodology .content strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .methodology .pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+
+    .methodology .step {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+    }
+
+    .methodology .step .step-num {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .methodology .step .step-label {
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-top: 0.2rem;
+    }
+
+    .methodology .step .step-value {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 0.15rem;
+    }
+
+    .methodology h3 {
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 1.25rem 0 0.6rem;
+      letter-spacing: -0.01em;
+    }
+
+    .methodology .rubric {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .methodology .rubric li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+      padding: 0.4rem 0.6rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+    }
+
+    .methodology .rubric .score {
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 1.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .methodology .criteria {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .methodology .criteria li {
+      padding-left: 1.1rem;
+      position: relative;
+      font-size: 0.9rem;
+    }
+
+    .methodology .criteria li::before {
+      content: "›";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
     @media (max-width: 540px) {
       .contributor {
         grid-template-columns: 48px 1fr auto;
@@ -250,8 +402,82 @@
     </article>
   </main>
 
+  <details class="methodology">
+    <summary>
+      <span>How these rankings were built</span>
+      <span class="chevron" aria-hidden="true">›</span>
+    </summary>
+    <div class="content">
+      <p>
+        We pulled <strong>contributor activity</strong> straight from the GitHub
+        API — every commit landed on the <code>master</code> branch over the
+        last <strong>90 days</strong>, restricted to commits whose CI checks
+        all came back green. From an initial pool of
+        <strong>7,150 commits</strong> we filtered down to
+        <strong>2,671</strong> that met the bar for evaluation.
+      </p>
+
+      <div class="pipeline">
+        <div class="step">
+          <div class="step-num">Step 1</div>
+          <div class="step-label">Collect</div>
+          <div class="step-value">GitHub API · 90d window</div>
+        </div>
+        <div class="step">
+          <div class="step-num">Step 2</div>
+          <div class="step-label">Filter</div>
+          <div class="step-value">7,150 → 2,671 commits</div>
+        </div>
+        <div class="step">
+          <div class="step-num">Step 3</div>
+          <div class="step-label">Score</div>
+          <div class="step-value">Gemini Flash 3.1 · 1–10</div>
+        </div>
+        <div class="step">
+          <div class="step-num">Step 4</div>
+          <div class="step-label">Aggregate</div>
+          <div class="step-value">Sum points per author</div>
+        </div>
+      </div>
+
+      <p>
+        Each surviving commit was sent to <strong>Gemini Flash 3.1</strong> with
+        its message and per-file diff summary, and the model returned a score
+        from <strong>1 to 10</strong>. The model weighs these factors roughly
+        equally:
+      </p>
+
+      <ul class="criteria">
+        <li><strong>Impact &amp; criticality</strong> — does it touch core logic, public APIs, security, data correctness, or hot paths?</li>
+        <li><strong>Engineering quality</strong> — clarity, structure, naming, error handling, edge-case coverage.</li>
+        <li><strong>Test coverage</strong> — are tests added or updated alongside non-trivial logic changes?</li>
+        <li><strong>Risk &amp; scope discipline</strong> — focused change vs. sprawling, unrelated edits.</li>
+        <li><strong>Commit message</strong> — does it clearly explain what changed and why?</li>
+      </ul>
+
+      <h3>Scoring rubric</h3>
+      <ul class="rubric">
+        <li><span class="score">1</span><span>Noise / whitespace / reverted</span></li>
+        <li><span class="score">2</span><span>Trivial — typo, format, version bump</span></li>
+        <li><span class="score">3</span><span>Very minor — single-line cosmetic</span></li>
+        <li><span class="score">4</span><span>Minor localized refactor</span></li>
+        <li><span class="score">5</span><span>Routine feature or bug fix</span></li>
+        <li><span class="score">6</span><span>Solid, well-scoped change</span></li>
+        <li><span class="score">7</span><span>Strong — important code, good tests</span></li>
+        <li><span class="score">8</span><span>High impact &amp; thoughtful</span></li>
+        <li><span class="score">9</span><span>Critical &amp; excellent</span></li>
+        <li><span class="score">10</span><span>Exemplary — rare, standard-setting</span></li>
+      </ul>
+
+      <p style="margin-top: 1.25rem;">
+        Finally we <strong>grouped every scored commit by author</strong> and
+        summed the points. The five highest totals are the leaderboard above.
+      </p>
+    </div>
+  </details>
+
   <footer>
-    Source: combined-initial-gemini-flash3.1.csv
+    Ranked using Gemini Flash 3.1
   </footer>
 </body>
 </html>
