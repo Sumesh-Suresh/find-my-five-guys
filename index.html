@@ -443,8 +443,18 @@
       <p>
         Each surviving commit was sent to <strong>Gemini Flash 3.1</strong> with
         its message and per-file diff summary, and the model returned a score
-        from <strong>1 to 10</strong>. 
+        from <strong>1 to 10</strong>. The features considered were:
       </p>
+
+      <ul class="criteria features">
+        <li><strong>Commit message</strong> — the author's stated intent and rationale.</li>
+        <li><strong>Merge-commit flag</strong> — whether the commit is a pure merge with no real change.</li>
+        <li><strong>Files changed</strong> — total number of files touched by the commit.</li>
+        <li><strong>Additions / deletions / total changes</strong> — overall LOC churn across the commit.</li>
+        <li><strong>Per-file path &amp; status</strong> — added, modified, deleted, or renamed (incl. previous filename).</li>
+        <li><strong>Per-file additions, deletions &amp; changes</strong> — LOC churn for each individual file.</li>
+        <li><strong>File diffs (patches)</strong> — the actual code changes, truncated to ~2,000 chars per file.</li>
+      </ul>
 
       <h3>Scoring rubric</h3>
       <ul class="rubric">
