@@ -443,17 +443,8 @@
       <p>
         Each surviving commit was sent to <strong>Gemini Flash 3.1</strong> with
         its message and per-file diff summary, and the model returned a score
-        from <strong>1 to 10</strong>. The model weighs these factors roughly
-        equally:
+        from <strong>1 to 10</strong>. 
       </p>
-
-      <ul class="criteria">
-        <li><strong>Impact &amp; criticality</strong> — does it touch core logic, public APIs, security, data correctness, or hot paths?</li>
-        <li><strong>Engineering quality</strong> — clarity, structure, naming, error handling, edge-case coverage.</li>
-        <li><strong>Test coverage</strong> — are tests added or updated alongside non-trivial logic changes?</li>
-        <li><strong>Risk &amp; scope discipline</strong> — focused change vs. sprawling, unrelated edits.</li>
-        <li><strong>Commit message</strong> — does it clearly explain what changed and why?</li>
-      </ul>
 
       <h3>Scoring rubric</h3>
       <ul class="rubric">
