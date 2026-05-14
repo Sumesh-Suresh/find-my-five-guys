@@ -311,6 +311,22 @@
       font-weight: 700;
     }
 
+    .leaderboard-status {
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 1.25rem 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .leaderboard-status.error {
+      color: #fca5a5;
+      border-color: rgba(248, 113, 113, 0.35);
+    }
+
     @media (max-width: 540px) {
       .contributor {
         grid-template-columns: 48px 1fr auto;
@@ -340,66 +356,8 @@
     </p>
   </header>
 
-  <main class="leaderboard" aria-label="Top contributors leaderboard">
-    <article class="contributor" data-rank="1">
-      <div class="rank" aria-label="Rank 1">1</div>
-      <div class="info">
-        <div class="name">Paul D'Ambra</div>
-        <div class="meta">137 commits</div>
-      </div>
-      <div class="stats">
-        <span class="points">953</span>
-        <span class="points-label">points</span>
-      </div>
-    </article>
-
-    <article class="contributor" data-rank="2">
-      <div class="rank" aria-label="Rank 2">2</div>
-      <div class="info">
-        <div class="name">Sam Pennington</div>
-        <div class="meta">104 commits</div>
-      </div>
-      <div class="stats">
-        <span class="points">716</span>
-        <span class="points-label">points</span>
-      </div>
-    </article>
-
-    <article class="contributor" data-rank="3">
-      <div class="rank" aria-label="Rank 3">3</div>
-      <div class="info">
-        <div class="name">Andrew Maguire</div>
-        <div class="meta">91 commits</div>
-      </div>
-      <div class="stats">
-        <span class="points">624</span>
-        <span class="points-label">points</span>
-      </div>
-    </article>
-
-    <article class="contributor" data-rank="4">
-      <div class="rank" aria-label="Rank 4">4</div>
-      <div class="info">
-        <div class="name">Julian Bez</div>
-        <div class="meta">72 commits</div>
-      </div>
-      <div class="stats">
-        <span class="points">472</span>
-        <span class="points-label">points</span>
-      </div>
-    </article>
-
-    <article class="contributor" data-rank="5">
-      <div class="rank" aria-label="Rank 5">5</div>
-      <div class="info">
-        <div class="name">posthog[bot]</div>
-        <div class="meta">70 commits</div>
-      </div>
-      <div class="stats">
-        <span class="points">450</span>
-        <span class="points-label">points</span>
-      </div>
-    </article>
+  <main class="leaderboard" aria-label="Top contributors leaderboard" aria-busy="true">
+    <p class="leaderboard-status" role="status">Loading contributors…</p>
   </main>
 
   <details class="methodology">
@@ -480,5 +438,154 @@
   <footer>
     Ranked using Gemini Flash 3.1
   </footer>
+
+  <script>
+    (function () {
+      const CSV_URL = "combined-initial-gemini-flash3.1.csv";
+      const TOP_N = 5;
+      const leaderboard = document.querySelector(".leaderboard");
+
+      function parseCSVLine(line) {
+        const out = [];
+        let cur = "";
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (inQuotes) {
+            if (ch === '"' && line[i + 1] === '"') {
+              cur += '"';
+              i++;
+            } else if (ch === '"') {
+              inQuotes = false;
+            } else {
+              cur += ch;
+            }
+          } else if (ch === '"') {
+            inQuotes = true;
+          } else if (ch === ",") {
+            out.push(cur);
+            cur = "";
+          } else {
+            cur += ch;
+          }
+        }
+        out.push(cur);
+        return out;
+      }
+
+      function parseCSV(text) {
+        const lines = text
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0);
+        if (lines.length === 0) return { headers: [], rows: [] };
+        const headers = parseCSVLine(lines[0]).map((h) => h.trim());
+        const rows = lines.slice(1).map((line) => {
+          const cells = parseCSVLine(line);
+          const row = {};
+          headers.forEach((h, i) => {
+            row[h] = (cells[i] ?? "").trim();
+          });
+          return row;
+        });
+        return { headers, rows };
+      }
+
+      function formatNumber(n) {
+        return Number(n).toLocaleString();
+      }
+
+      function renderTop(rows) {
+        const top = rows
+          .map((r) => ({
+            name: r.author_name,
+            points: Number(r.points),
+            commits: Number(r.commits),
+          }))
+          .filter((r) => r.name && Number.isFinite(r.points))
+          .sort((a, b) => b.points - a.points)
+          .slice(0, TOP_N);
+
+        leaderboard.innerHTML = "";
+        leaderboard.setAttribute("aria-busy", "false");
+
+        if (top.length === 0) {
+          const p = document.createElement("p");
+          p.className = "leaderboard-status error";
+          p.setAttribute("role", "status");
+          p.textContent = "No contributors found in the data file.";
+          leaderboard.appendChild(p);
+          return;
+        }
+
+        top.forEach((c, idx) => {
+          const rank = idx + 1;
+          const article = document.createElement("article");
+          article.className = "contributor";
+          article.dataset.rank = String(rank);
+
+          const rankEl = document.createElement("div");
+          rankEl.className = "rank";
+          rankEl.setAttribute("aria-label", `Rank ${rank}`);
+          rankEl.textContent = String(rank);
+
+          const info = document.createElement("div");
+          info.className = "info";
+          const name = document.createElement("div");
+          name.className = "name";
+          name.textContent = c.name;
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.textContent = Number.isFinite(c.commits)
+            ? `${formatNumber(c.commits)} commits`
+            : "";
+          info.appendChild(name);
+          if (meta.textContent) info.appendChild(meta);
+
+          const stats = document.createElement("div");
+          stats.className = "stats";
+          const points = document.createElement("span");
+          points.className = "points";
+          points.textContent = formatNumber(c.points);
+          const pointsLabel = document.createElement("span");
+          pointsLabel.className = "points-label";
+          pointsLabel.textContent = "points";
+          stats.appendChild(points);
+          stats.appendChild(pointsLabel);
+
+          article.appendChild(rankEl);
+          article.appendChild(info);
+          article.appendChild(stats);
+          leaderboard.appendChild(article);
+        });
+      }
+
+      function showError(message) {
+        leaderboard.innerHTML = "";
+        leaderboard.setAttribute("aria-busy", "false");
+        const p = document.createElement("p");
+        p.className = "leaderboard-status error";
+        p.setAttribute("role", "status");
+        p.textContent = message;
+        leaderboard.appendChild(p);
+      }
+
+      fetch(CSV_URL, { cache: "no-cache" })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.text();
+        })
+        .then((text) => {
+          const { rows } = parseCSV(text);
+          renderTop(rows);
+        })
+        .catch((err) => {
+          console.error("Failed to load contributors CSV:", err);
+          showError(
+            `Couldn't load ${CSV_URL}. If you opened this file directly, serve the folder over HTTP (e.g. \`python3 -m http.server\`) so the browser can fetch the CSV.`
+          );
+        });
+    })();
+  </script>
 </body>
 </html>
